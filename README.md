@@ -4,7 +4,7 @@ Software Desktop profissional desenvolvido 100% em **Java 21**, utilizando **Jav
 
 ---
 
-## 🚀 Funcionalidades Completas
+## Funcionalidades Completas
 
 ### 1. Diagnóstico do Computador & Hardware
 * **Hardware & Sistema:**
@@ -31,9 +31,9 @@ Software Desktop profissional desenvolvido 100% em **Java 21**, utilizando **Jav
 ### 3. Varredura de Rede (IP Scanner Multithread)
 * Varredura ultrarrápida de sub-rede local (ex: de `192.168.1.1` até `192.168.1.254`) em paralelo utilizando 40 threads simultâneas.
 * Identificação inteligente de tipo de dispositivo:
-  * 🖨️ **Impressora de Rede** (ao detectar a porta 9100 aberta).
-  * 💻 **Computador Windows** (ao detectar a porta 445 SMB aberta).
-  * 🌐 **Interface Web / Dispositivo de Rede** (ao detectar porta 80 HTTP).
+  * **Impressora de Rede** (ao detectar a porta 9100 aberta).
+  * **Computador Windows** (ao detectar a porta 445 SMB aberta).
+  * **Interface Web / Dispositivo de Rede** (ao detectar porta 80 HTTP).
 * Resolução automática de Hostname DNS reverso e tempo de resposta.
 
 ### 4. Configuração Manual de IP (Estático ou DHCP)
@@ -64,7 +64,7 @@ Software Desktop profissional desenvolvido 100% em **Java 21**, utilizando **Jav
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 * **Linguagem:** Java 21+
 * **Interface Gráfica:** JavaFX (FXML declarativo + estilos em CSS)
@@ -73,7 +73,7 @@ Software Desktop profissional desenvolvido 100% em **Java 21**, utilizando **Jav
 
 ---
 
-## 📂 Estrutura do Código-Fonte
+## Estrutura do Código-Fonte
 
 ```text
 net-diagnostico/
@@ -106,12 +106,12 @@ net-diagnostico/
 
 ---
 
-## 💻 Como Executar
+## Como Executar
 
 ### No IntelliJ IDEA
 1. Abra o **IntelliJ IDEA**.
 2. Vá em **File > Open...** e aponte para `C:\Users\PC\IdeaProjects\net-diagnostico`.
-3. Abra o arquivo [Launcher.java](src/main/java/com/netdiag/Launcher.java) e clique em **Run** ▶️.
+3. Abra o arquivo [Launcher.java](src/main/java/com/netdiag/Launcher.java) e clique em **Run**.
 
 ### Via Prompt / Arquivo BAT (desenvolvimento local)
 * Dê duplo clique em `run.bat` na raiz do projeto.
@@ -120,7 +120,7 @@ net-diagnostico/
 
 ---
 
-## 💾 Uso via Pendrive (sem Java instalado)
+## Uso via Pendrive (sem Java instalado)
 
 O NetDiag Pro pode rodar em **qualquer computador Windows** diretamente do pendrive como um **`.exe` standalone** — sem instalar Java, sem instalar nada.
 
@@ -152,9 +152,9 @@ Copie a pasta `pendrive-dist\NetDiag Pro\` para o pendrive:
 
 ```text
 pendrive-dist\
-  NetDiag Pro\               ← copie esta pasta para o pendrive
-    NetDiag Pro.exe          ← clique duplo para abrir, sem instalar nada
-    runtime\                 ← JRE embutido (invisível ao usuário)
+  NetDiag Pro\               <- copie esta pasta para o pendrive
+    NetDiag Pro.exe          <- clique duplo para abrir, sem instalar nada
+    runtime\                 <- JRE embutido (invisível ao usuário)
     app\
       netdiag-pro.jar
 ```
@@ -163,7 +163,7 @@ pendrive-dist\
 
 1. Conecte o pendrive no computador.
 2. Abra a pasta `NetDiag Pro` no pendrive.
-3. Clique com o botão direito em **`NetDiag Pro.exe`** → **"Executar como administrador"**.
+3. Clique com o botão direito em **`NetDiag Pro.exe`** e selecione **"Executar como administrador"**.
    - Necessário para: configurar IP estático, limpar fila do spooler.
    - Para apenas diagnóstico e varredura de rede, duplo clique normal funciona.
 
