@@ -1,0 +1,752 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.netdiag.controller.MainController"
+            stylesheets="@styles.css" prefWidth="1020.0" prefHeight="720.0">
+
+    <!-- CABEÇALHO -->
+    <top>
+        <HBox styleClass="header-bar" spacing="15" alignment="CENTER_LEFT">
+            <VBox HBox.hgrow="ALWAYS">
+                <Label text="NetDiag Pro" styleClass="header-title"/>
+                <Label text="Diagnóstico de Hardware, Impressoras, Varredura de Rede e Configuração de IP (Online &amp; Offline)" styleClass="header-subtitle"/>
+            </VBox>
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button fx:id="btnExportReport" text="📄 Exportar Relatório HTML" onAction="#handleExportReport" styleClass="btn-success"/>
+                <Label fx:id="lblInternetStatus" text="VERIFICANDO CONEXÃO..." styleClass="badge-offline"/>
+                <Button fx:id="btnCheckInternet" text="Verificar Internet" onAction="#handleCheckInternet" styleClass="btn-primary"/>
+            </HBox>
+        </HBox>
+    </top>
+
+    <!-- CONTEÚDO CENTRAL (ABAS) -->
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+
+            <!-- ABA 1: COMPUTADOR & REDE -->
+            <Tab text="Computador &amp; Rede">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <!-- Card Computador -->
+                        <VBox styleClass="card" spacing="10">
+                            <Label text="Diagnóstico do Computador (Hardware &amp; Sistema)" styleClass="card-title"/>
+                            <GridPane hgap="15" vgap="8">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="140" prefWidth="160"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+                                <Label text="Hostname / Máquina:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblHostName" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                <Label text="Sistema Operacional:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblOsInfo" text="-" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                <Label text="Processadores (Cores):" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblCpuInfo" text="-" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                <Label text="Memória RAM:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                                    <ProgressBar fx:id="progressRam" prefWidth="200" progress="0.0"/>
+                                    <Label fx:id="lblRamInfo" text="-"/>
+                                </HBox>
+
+                                <Label text="Discos / Partições:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblDisksInfo" text="-" GridPane.rowIndex="4" GridPane.columnIndex="1" wrapText="true"/>
+                            </GridPane>
+                            <HBox alignment="CENTER_RIGHT">
+                                <Button text="Atualizar Diagnóstico da Máquina" onAction="#handleRefreshSystemInfo" styleClass="btn-primary"/>
+                            </HBox>
+                        </VBox>
+
+                        <!-- Card Placas de Rede -->
+                        <VBox styleClass="card" spacing="10">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Placas de Rede Detectadas no Computador" styleClass="card-title" HBox.hgrow="ALWAYS"/>
+                                <Pane HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="btnRefreshAdapters" text="Recarregar Placas" onAction="#handleRefreshAdapters" styleClass="btn-primary"/>
+                            </HBox>
+                            <TableView fx:id="tableAdapters" prefHeight="140">
+                                <columns>
+                                    <TableColumn fx:id="colAdapterName" text="Adaptador" prefWidth="300"/>
+                                    <TableColumn fx:id="colAdapterIp" text="Endereço IPv4" prefWidth="160"/>
+                                    <TableColumn fx:id="colAdapterMac" text="MAC Address" prefWidth="180"/>
+                                    <TableColumn fx:id="colAdapterStatus" text="Status" prefWidth="100"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Card Teste de Conectividade (Ping) -->
+                        <VBox styleClass="card" spacing="10">
+                            <Label text="Teste Rápido de Conectividade (Ping)" styleClass="card-title"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="Host ou IP:"/>
+                                <TextField fx:id="txtPingHost" promptText="Ex: 192.168.1.1 ou google.com" prefWidth="250"/>
+                                <Button fx:id="btnExecutePing" text="Disparar Ping" onAction="#handleExecutePing" styleClass="btn-success"/>
+                                <Label fx:id="lblPingResult" text="" style="-fx-font-weight: bold;"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+            <!-- ABA 2: IMPRESSORAS -->
+            <Tab text="Diagnóstico de Impressoras">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <!-- Impressoras Instaladas -->
+                        <VBox styleClass="card" spacing="10">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Impressoras Instaladas no Windows" styleClass="card-title" HBox.hgrow="ALWAYS"/>
+                                <Pane HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="btnScanPrinters" text="Buscar Impressoras do Sistema" onAction="#handleScanPrinters" styleClass="btn-primary"/>
+                            </HBox>
+                            <TableView fx:id="tablePrinters" prefHeight="170">
+                                <columns>
+                                    <TableColumn fx:id="colPrinterName" text="Nome da Impressora" prefWidth="320"/>
+                                    <TableColumn fx:id="colPrinterPort" text="Porta / Conexão" prefWidth="180"/>
+                                    <TableColumn fx:id="colPrinterDefault" text="Padrão?" prefWidth="80"/>
+                                    <TableColumn fx:id="colPrinterStatus" text="Status" prefWidth="160"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Diagnóstico de Impressora de Rede -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="Diagnóstico Avançado de Impressora de Rede (via IP)" styleClass="card-title"/>
+                            <Label text="Testa comunicação com a impressora, porta RAW 9100 (fila direta), porta LPD 515 e página web de gerenciamento." style="-fx-text-fill: #64748b;"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="IP da Impressora:"/>
+                                <TextField fx:id="txtPrinterIp" promptText="Ex: 192.168.1.200" prefWidth="220"/>
+                                <Button fx:id="btnDiagnosePrinter" text="Iniciar Diagnóstico Completo" onAction="#handleDiagnoseNetworkPrinter" styleClass="btn-success"/>
+                            </HBox>
+                            <TextArea fx:id="txtPrinterDiagOutput" prefHeight="120" editable="false" promptText="Os resultados dos testes de porta e conexão aparecerão aqui..."/>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+            <!-- ABA 3: VARREDURA DE REDE (IP SCANNER) -->
+            <Tab text="Varredura de Rede (IP Scanner)">
+                <VBox spacing="14">
+                    <padding>
+                        <Insets top="16" right="16" bottom="16" left="16"/>
+                    </padding>
+
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="Scanner Rápido de Dispositivos e Impressoras na Sub-rede" styleClass="card-title"/>
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <Label text="Sub-rede Base:"/>
+                            <TextField fx:id="txtSubnetBase" promptText="Ex: 192.168.1" text="192.168.1" prefWidth="130"/>
+                            <Label text="Início:"/>
+                            <TextField fx:id="txtScanStart" text="1" prefWidth="60"/>
+                            <Label text="Fim:"/>
+                            <TextField fx:id="txtScanEnd" text="254" prefWidth="60"/>
+                            <Button fx:id="btnStartScan" text="🔍 Iniciar Varredura de Rede" onAction="#handleStartNetworkScan" styleClass="btn-success"/>
+                        </HBox>
+                        <ProgressBar fx:id="progressScan" prefWidth="600" progress="0.0"/>
+                        <Label fx:id="lblScanStatus" text="Pronto para varrer a sub-rede." style="-fx-text-fill: #64748b;"/>
+                    </VBox>
+
+                    <TableView fx:id="tableDiscovered" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colDiscIp" text="Endereço IP" prefWidth="150"/>
+                            <TableColumn fx:id="colDiscHost" text="Nome do Host (DNS)" prefWidth="250"/>
+                            <TableColumn fx:id="colDiscType" text="Tipo Identificado" prefWidth="180"/>
+                            <TableColumn fx:id="colDiscPing" text="Latência (ms)" prefWidth="110"/>
+                            <TableColumn fx:id="colDiscPorts" text="Portas Abertas Detectadas" prefWidth="240"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- ABA 4: CONFIGURAÇÃO DE IP MANUALMENTE -->
+            <Tab text="Configuração de IP (Rede)">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <VBox styleClass="card" spacing="14">
+                            <Label text="Configurar Endereçamento IP Manualmente (Estático) ou DHCP" styleClass="card-title"/>
+                            <Label text="Nota: Requer permissão de Administrador do Windows para aplicar as alterações." style="-fx-text-fill: #d97706; -fx-font-weight: bold;"/>
+
+                            <GridPane hgap="12" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="140" prefWidth="150"/>
+                                    <ColumnConstraints prefWidth="320"/>
+                                </columnConstraints>
+
+                                <Label text="Selecione a Placa de Rede:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <ComboBox fx:id="cbAdapters" prefWidth="320" promptText="Escolha a placa..." GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                <Label text="Endereço IPv4:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtStaticIp" promptText="Ex: 192.168.1.50" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                <Label text="Máscara de Sub-rede:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtSubnetMask" promptText="Ex: 255.255.255.0" text="255.255.255.0" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                <Label text="Gateway Padrão:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtGateway" promptText="Ex: 192.168.1.1" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                                <Label text="DNS Primário:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtDns1" promptText="Ex: 8.8.8.8" text="8.8.8.8" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                                <Label text="DNS Secundário:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtDns2" promptText="Ex: 1.1.1.1" text="1.1.1.1" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                            </GridPane>
+
+                            <HBox spacing="12">
+                                <Button fx:id="btnApplyStatic" text="Aplicar IP Estático Manual" onAction="#handleApplyStaticIp" styleClass="btn-warning"/>
+                                <Button fx:id="btnApplyDhcp" text="Restaurar para DHCP (Automático)" onAction="#handleApplyDhcp" styleClass="btn-primary"/>
+                            </HBox>
+
+                            <Label fx:id="lblIpStatus" text="" wrapText="true" style="-fx-font-weight: bold;"/>
+                        </VBox>
+
+                        <!-- Perfis Salvos no Banco SQLite -->
+                        <VBox styleClass="card" spacing="10">
+                            <Label text="Perfis de Rede Salvos (Banco Local SQLite)" styleClass="card-title"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <TextField fx:id="txtProfileName" promptText="Nome do perfil (Ex: Rede Escritório, Manutenção)" prefWidth="300"/>
+                                <Button fx:id="btnSaveProfile" text="Salvar Config Atual como Perfil" onAction="#handleSaveProfile" styleClass="btn-success"/>
+                            </HBox>
+                            <TableView fx:id="tableProfiles" prefHeight="140">
+                                <columns>
+                                    <TableColumn fx:id="colProfName" text="Nome do Perfil" prefWidth="180"/>
+                                    <TableColumn fx:id="colProfAdapter" text="Placa de Rede" prefWidth="160"/>
+                                    <TableColumn fx:id="colProfIp" text="IP Estático" prefWidth="130"/>
+                                    <TableColumn fx:id="colProfMask" text="Máscara" prefWidth="130"/>
+                                    <TableColumn fx:id="colProfGateway" text="Gateway" prefWidth="130"/>
+                                </columns>
+                            </TableView>
+                            <HBox spacing="10">
+                                <Button fx:id="btnLoadProfile" text="Carregar Perfil Selecionado nos Campos" onAction="#handleLoadProfile" styleClass="btn-primary"/>
+                                <Button fx:id="btnDeleteProfile" text="Excluir Perfil" onAction="#handleDeleteProfile" styleClass="btn-danger"/>
+                            </HBox>
+                        </VBox>
+
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+            <!-- ABA 5: FERRAMENTAS DE SUPORTE TI -->
+            <Tab text="Ferramentas de Suporte TI">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="Reparo do Spooler e Impressão do Windows" styleClass="card-title"/>
+                            <Label text="Resolve problemas comuns de documentos travados na fila de impressão ou erro de 'Spooler não está em execução'." style="-fx-text-fill: #64748b;"/>
+                            <HBox spacing="12">
+                                <Button text="🔄 Reiniciar Serviço do Spooler" onAction="#handleRestartSpooler" styleClass="btn-primary"/>
+                                <Button text="🧹 Limpar Fila de Impressão Travada" onAction="#handleClearPrintQueue" styleClass="btn-warning"/>
+                            </HBox>
+                        </VBox>
+
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="Manutenção de Rede do Windows" styleClass="card-title"/>
+                            <Label text="Comandos úteis para restaurar conectividade sem precisar reiniciar a máquina." style="-fx-text-fill: #64748b;"/>
+                            <HBox spacing="12">
+                                <Button text="⚡ Limpar Cache DNS (Flush DNS)" onAction="#handleFlushDns" styleClass="btn-primary"/>
+                                <Button text="🔄 Renovar Endereço IP (Renew IP)" onAction="#handleRenewIp" styleClass="btn-primary"/>
+                            </HBox>
+                        </VBox>
+
+                        <VBox styleClass="card" spacing="10">
+                            <Label text="Saída das Ferramentas de Suporte" styleClass="card-title"/>
+                            <TextArea fx:id="txtToolsOutput" prefHeight="160" editable="false" promptText="Logs de execução das ferramentas de reparo aparecerão aqui..."/>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+            <!-- ABA 6: HISTÓRICO & BANCO LOCAL -->
+            <Tab text="Histórico (SQLite)">
+                <VBox spacing="12">
+                    <padding>
+                        <Insets top="16" right="16" bottom="16" left="16"/>
+                    </padding>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Histórico Completo de Testes e Alterações Salvas Localmente" styleClass="card-title" HBox.hgrow="ALWAYS"/>
+                        <Pane HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="btnRefreshLogs" text="Atualizar Histórico" onAction="#handleRefreshLogs" styleClass="btn-primary"/>
+                        <Button fx:id="btnClearLogs" text="Limpar Registros" onAction="#handleClearLogs" styleClass="btn-danger"/>
+                    </HBox>
+                    <TableView fx:id="tableLogs" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colLogTime" text="Data / Hora" prefWidth="150"/>
+                            <TableColumn fx:id="colLogCat" text="Categoria" prefWidth="140"/>
+                            <TableColumn fx:id="colLogTarget" text="Alvo / IP" prefWidth="160"/>
+                            <TableColumn fx:id="colLogStatus" text="Status" prefWidth="110"/>
+                            <TableColumn fx:id="colLogDetails" text="Detalhes / Resposta" prefWidth="380"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- ABA 7: TESTES DE HARDWARE -->
+            <Tab text="🖥️ Testes de Hardware">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <!-- ═══ CARD CPU ═══ -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="Diagnóstico do Processador (CPU)" styleClass="card-title"/>
+
+                            <GridPane hgap="16" vgap="8">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="180"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Label text="Modelo / Identificação:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblHwCpuModel" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1" wrapText="true"/>
+
+                                <Label text="Núcleos Físicos / Lógicos:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblHwCpuCores" text="-" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                <Label text="Frequência Máxima:" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblHwCpuFreq" text="-" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                <Label text="Arquitetura:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="lblHwCpuArch" text="-" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                                <Label text="Uso Atual (%):" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                                    <ProgressBar fx:id="progressHwCpuLoad" prefWidth="200" progress="0.0"/>
+                                    <Label fx:id="lblHwCpuLoad" text="-"/>
+                                </HBox>
+
+                                <Label text="Temperatura:" GridPane.rowIndex="5" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <VBox spacing="4" GridPane.rowIndex="5" GridPane.columnIndex="1">
+                                    <Label fx:id="lblHwCpuTemp" text="-" wrapText="true"/>
+                                    <TextArea fx:id="txtHwCoreTemps" prefHeight="70" editable="false" visible="false"
+                                              promptText="Temperaturas por núcleo aparecerão aqui..."/>
+                                    <HBox spacing="8">
+                                        <Button fx:id="btnHwInstallLhm" text="📥 Instalar Sensor (LHM)" onAction="#handleHwInstallLhm" styleClass="btn-warning"/>
+                                        <Button fx:id="btnHwReadTemp" text="🌡️ Ler Temperatura" onAction="#handleHwReadTemp" styleClass="btn-success" disable="true"/>
+                                        <ProgressBar fx:id="progressHwLhm" prefWidth="120" progress="0.0" visible="false"/>
+                                    </HBox>
+                                    <Label fx:id="lblHwLhmStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                </VBox>
+                            </GridPane>
+
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Button fx:id="btnHwCpuInfo" text="🔍 Coletar Informações da CPU" onAction="#handleHwCpuInfo" styleClass="btn-primary"/>
+                            </HBox>
+
+                            <!-- Stress Test -->
+                            <VBox styleClass="hw-subcard" spacing="8">
+                                <Label text="⚡ Teste de Stress da CPU" style="-fx-font-weight: bold; -fx-font-size: 13px;"/>
+                                <Label text="Sobrecarrega todos os núcleos por N segundos para verificar estabilidade e aquecimento."
+                                       style="-fx-text-fill: #64748b;" wrapText="true"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Duração (segundos):"/>
+                                    <TextField fx:id="txtHwStressDuration" text="10" prefWidth="70"/>
+                                    <Button fx:id="btnHwCpuStress" text="▶ Iniciar Stress Test" onAction="#handleHwCpuStress" styleClass="btn-warning"/>
+                                    <Label fx:id="lblHwStressStatus" text="" style="-fx-font-weight: bold;"/>
+                                </HBox>
+                                <ProgressBar fx:id="progressHwStress" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblHwStressResult" text="" wrapText="true" style="-fx-text-fill: #059669; -fx-font-weight: bold;"/>
+                            </VBox>
+                        </VBox>
+
+                        <!-- ═══ CARD HD / DISCO ═══ -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="Diagnóstico de Disco (HD / SSD / NVMe)" styleClass="card-title"/>
+
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Button fx:id="btnHwDiskInfo" text="🔍 Escanear Discos Físicos" onAction="#handleHwDiskInfo" styleClass="btn-primary"/>
+                                <Label text="Lê modelo, serial, tipo de mídia e status SMART via WMIC." style="-fx-text-fill: #64748b;"/>
+                            </HBox>
+
+                            <TableView fx:id="tableHwDisks" prefHeight="160">
+                                <columns>
+                                    <TableColumn fx:id="colHwDiskDrive"   text="Unidade / Modelo"    prefWidth="240"/>
+                                    <TableColumn fx:id="colHwDiskType"    text="Tipo"                prefWidth="90"/>
+                                    <TableColumn fx:id="colHwDiskSize"    text="Tamanho"             prefWidth="90"/>
+                                    <TableColumn fx:id="colHwDiskSerial"  text="Serial"              prefWidth="160"/>
+                                    <TableColumn fx:id="colHwDiskSmart"   text="SMART Status"        prefWidth="110"/>
+                                    <TableColumn fx:id="colHwDiskRead"    text="Leitura (MB/s)"      prefWidth="110"/>
+                                    <TableColumn fx:id="colHwDiskWrite"   text="Escrita (MB/s)"      prefWidth="110"/>
+                                </columns>
+                            </TableView>
+
+                            <!-- Teste de Velocidade -->
+                            <VBox styleClass="hw-subcard" spacing="8">
+                                <Label text="💾 Teste de Velocidade de Leitura e Escrita" style="-fx-font-weight: bold; -fx-font-size: 13px;"/>
+                                <Label text="Escreve e lê um arquivo temporário no disco selecionado e mede o throughput real (MB/s)."
+                                       style="-fx-text-fill: #64748b;" wrapText="true"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="Unidade:"/>
+                                    <ComboBox fx:id="cbHwDiskDrive" prefWidth="80" promptText="C"/>
+                                    <Label text="Tamanho do arquivo de teste:"/>
+                                    <ComboBox fx:id="cbHwTestSize" prefWidth="110">
+                                        <items>
+                                            <FXCollections fx:factory="observableArrayList">
+                                                <String fx:value="128 MB"/>
+                                                <String fx:value="256 MB"/>
+                                                <String fx:value="512 MB"/>
+                                                <String fx:value="1024 MB (1 GB)"/>
+                                            </FXCollections>
+                                        </items>
+                                    </ComboBox>
+                                    <Button fx:id="btnHwDiskSpeed" text="▶ Medir Velocidade" onAction="#handleHwDiskSpeed" styleClass="btn-success"/>
+                                </HBox>
+                                <ProgressBar fx:id="progressHwDisk" prefWidth="9999" progress="0.0" visible="false"/>
+                                <GridPane hgap="20" vgap="6">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="140"/>
+                                        <ColumnConstraints hgrow="ALWAYS"/>
+                                        <ColumnConstraints minWidth="140"/>
+                                        <ColumnConstraints hgrow="ALWAYS"/>
+                                    </columnConstraints>
+                                    <Label text="Velocidade de Escrita:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                    <Label fx:id="lblHwDiskWrite" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1" style="-fx-text-fill: #d97706; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                    <Label text="Velocidade de Leitura:"  GridPane.rowIndex="0" GridPane.columnIndex="2" style="-fx-font-weight: bold;"/>
+                                    <Label fx:id="lblHwDiskRead"  text="-" GridPane.rowIndex="0" GridPane.columnIndex="3" style="-fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                </GridPane>
+                            </VBox>
+                        </VBox>
+
+                        <!-- Log geral -->
+                        <VBox styleClass="card" spacing="8">
+                            <Label text="Log de Diagnóstico de Hardware" styleClass="card-title"/>
+                            <TextArea fx:id="txtHwLog" prefHeight="130" editable="false"
+                                      promptText="Os resultados detalhados dos testes de hardware aparecerão aqui..."/>
+                        </VBox>
+
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+            <!-- ABA 8: INSTALAÇÕES -->
+            <Tab text="📥 Instalações">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <!-- Cabeçalho da aba -->
+                        <VBox styleClass="card" spacing="6">
+                            <Label text="Central de Instalação de Softwares" styleClass="card-title"/>
+                            <Label text="Baixe e instale os principais softwares de suporte técnico com um clique. Os instaladores são salvos em: Downloads\NetDiag-Installers\"
+                                   style="-fx-text-fill: #64748b;" wrapText="true"/>
+                            <Label fx:id="lblInstallDir" text="" style="-fx-text-fill: #2563eb; -fx-font-size: 11px;"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Button text="⬇️ Baixar Todos os Softwares" onAction="#handleInstallAll" styleClass="btn-install-all"/>
+                                <Button text="📂 Abrir Pasta de Instaladores" onAction="#handleOpenInstallersFolder" styleClass="btn-primary"/>
+                            </HBox>
+                        </VBox>
+
+                        <!-- Grade de cards de softwares -->
+                        <GridPane hgap="14" vgap="14">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                            </columnConstraints>
+
+                            <!-- Card: Google Chrome -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🌐" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="Google Chrome" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Navegador web rápido e seguro do Google." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressChrome" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblChromeStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallChrome" text="⬇️ Baixar" onAction="#handleInstallChrome" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunChrome" text="▶ Instalar" onAction="#handleRunChrome" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: AnyDesk -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🖥️" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="AnyDesk" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Acesso remoto leve e de alta velocidade." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressAnyDesk" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblAnyDeskStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallAnyDesk" text="⬇️ Baixar" onAction="#handleInstallAnyDesk" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunAnyDesk" text="▶ Instalar" onAction="#handleRunAnyDesk" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: TeamViewer -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🔗" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="TeamViewer" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Suporte remoto, reuniões e transferência de arquivos." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressTeamViewer" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblTeamViewerStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallTeamViewer" text="⬇️ Baixar" onAction="#handleInstallTeamViewer" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunTeamViewer" text="▶ Instalar" onAction="#handleRunTeamViewer" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: WinRAR -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="📦" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="WinRAR" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Compactador e descompactador (RAR, ZIP, 7z)." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressWinRAR" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblWinRARStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallWinRAR" text="⬇️ Baixar" onAction="#handleInstallWinRAR" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunWinRAR" text="▶ Instalar" onAction="#handleRunWinRAR" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: VLC -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="▶️" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="VLC Media Player" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Reprodutor multimídia universal, todos os formatos." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressVLC" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblVLCStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallVLC" text="⬇️ Baixar" onAction="#handleInstallVLC" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunVLC" text="▶ Instalar" onAction="#handleRunVLC" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: 7-Zip -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🗜️" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="7-Zip" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Compactador de arquivos gratuito e open source." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progress7Zip" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lbl7ZipStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstall7Zip" text="⬇️ Baixar" onAction="#handleInstall7Zip" styleClass="btn-install"/>
+                                    <Button fx:id="btnRun7Zip" text="▶ Instalar" onAction="#handleRun7Zip" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: Notepad++ -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="3">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="📋" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="Notepad++" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Editor de texto avançado para técnicos e programadores." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressNotepadPP" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblNotepadPPStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallNotepadPP" text="⬇️ Baixar" onAction="#handleInstallNotepadPP" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunNotepadPP" text="▶ Instalar" onAction="#handleRunNotepadPP" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: VoixIP (app interno) -->
+                            <VBox styleClass="install-card" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="📞" style="-fx-font-size: 24px;"/>
+                                    <VBox>
+                                        <Label text="VoixIP" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label text="Aplicativo interno de telefonia VoIP corporativo." style="-fx-text-fill: #64748b; -fx-font-size: 11px;" wrapText="true"/>
+                                        <Label text="⚠ App particular da empresa" style="-fx-text-fill: #d97706; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                    </VBox>
+                                </HBox>
+                                <ProgressBar fx:id="progressVoixIP" prefWidth="9999" progress="0.0" visible="false"/>
+                                <Label fx:id="lblVoixIPStatus" text="" style="-fx-font-size: 11px;" wrapText="true"/>
+                                <HBox spacing="8">
+                                    <Button fx:id="btnInstallVoixIP" text="⬇️ Baixar" onAction="#handleInstallVoixIP" styleClass="btn-install"/>
+                                    <Button fx:id="btnRunVoixIP" text="▶ Instalar" onAction="#handleRunVoixIP" styleClass="btn-run" disable="true"/>
+                                </HBox>
+                            </VBox>
+
+                        </GridPane>
+
+                        <!-- Log de instalação -->
+                        <VBox styleClass="card" spacing="8">
+                            <Label text="Log de Downloads" styleClass="card-title"/>
+                            <TextArea fx:id="txtInstallLog" prefHeight="110" editable="false"
+                                      promptText="O status dos downloads e instalações aparecerá aqui..."/>
+                        </VBox>
+
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+            <!-- ABA 8: LINKS ÚTEIS -->
+            <Tab text="🔗 Links Úteis">
+                <ScrollPane fitToWidth="true">
+                    <VBox spacing="16">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+
+                        <!-- Sistemas Internos -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="🏢 Sistemas Internos da Empresa" styleClass="card-title"/>
+                            <Label text="Acesso rápido aos sistemas corporativos via navegador padrão." style="-fx-text-fill: #64748b;"/>
+
+                            <GridPane hgap="12" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                </columnConstraints>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <Label text="📊 ERP / Sistema de Gestão" style="-fx-font-weight: bold;"/>
+                                    <Label text="Sistema principal de gestão da empresa." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir no Navegador" onAction="#handleOpenErp" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <Label text="📞 Portal VoixIP" style="-fx-font-weight: bold;"/>
+                                    <Label text="Painel de administração e ramais VoIP." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir no Navegador" onAction="#handleOpenVoixPortal" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                    <Label text="🗂️ Help Desk / Chamados TI" style="-fx-font-weight: bold;"/>
+                                    <Label text="Abertura e acompanhamento de chamados técnicos." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir no Navegador" onAction="#handleOpenHelpDesk" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <Label text="📁 Servidor de Arquivos (NAS)" style="-fx-font-weight: bold;"/>
+                                    <Label text="Acesso ao gerenciador de arquivos corporativo." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir no Navegador" onAction="#handleOpenNas" styleClass="btn-link"/>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+
+                        <!-- Ferramentas Online -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="🛠️ Ferramentas Online para Suporte TI" styleClass="card-title"/>
+
+                            <GridPane hgap="12" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                </columnConstraints>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <Label text="🔍 WhatIsMyIP" style="-fx-font-weight: bold;"/>
+                                    <Label text="Verifica o IP público externo da conexão." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenWhatIsMyIp" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <Label text="📡 Fast.com — Teste de Velocidade" style="-fx-font-weight: bold;"/>
+                                    <Label text="Medição rápida da velocidade de internet (Netflix)." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenSpeedTest" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                    <Label text="🌐 MXToolbox — DNS / Email" style="-fx-font-weight: bold;"/>
+                                    <Label text="Diagnóstico de DNS, MX, blacklist e SMTP." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenMxToolbox" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <Label text="🔓 Shodan — Segurança de Rede" style="-fx-font-weight: bold;"/>
+                                    <Label text="Verifica exposição de IPs e dispositivos na internet." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenShodan" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                    <Label text="📶 PingMan — Monitor de Hosts" style="-fx-font-weight: bold;"/>
+                                    <Label text="Monitoramento de ping contínuo via browser." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenPingman" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                    <Label text="🖨️ HP Support — Suporte de Impressoras" style="-fx-font-weight: bold;"/>
+                                    <Label text="Downloads de drivers e diagnóstico HP." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenHpSupport" styleClass="btn-link"/>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+
+                        <!-- Documentação Técnica -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="📚 Documentação e Referência Técnica" styleClass="card-title"/>
+
+                            <GridPane hgap="12" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                    <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                                </columnConstraints>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <Label text="📘 Microsoft Docs — Windows Server" style="-fx-font-weight: bold;"/>
+                                    <Label text="Documentação oficial Microsoft para TI." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenMsDocs" styleClass="btn-link"/>
+                                </VBox>
+
+                                <VBox styleClass="link-card" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <Label text="📗 Suporte Microsoft — Artigos KB" style="-fx-font-weight: bold;"/>
+                                    <Label text="Base de conhecimento para resolução de problemas." style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
+                                    <Button text="🌐 Abrir" onAction="#handleOpenMsSupport" styleClass="btn-link"/>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+
+        </TabPane>
+    </center>
+
+    <!-- BARRA DE STATUS INFERIOR -->
+    <bottom>
+        <HBox styleClass="status-bar" alignment="CENTER_LEFT">
+            <Label fx:id="lblStatusBar" text="Pronto | Banco de Dados SQLite Conectado."/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

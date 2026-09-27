@@ -1,0 +1,60 @@
+# ============================================================
+#  .gitignore - NetDiag Pro
+#  Java 21 + Maven + IntelliJ IDEA + JavaFX
+# ============================================================
+
+# ── Maven ────────────────────────────────────────────────────
+target/
+dependency-reduced-pom.xml
+*.jar
+*.war
+*.ear
+
+# ── IntelliJ IDEA ────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Excecao: manter o .gitignore do .idea gerado pelo IntelliJ
+# (contém configs de VCS que nao sao locais)
+!.idea/.gitignore
+
+# ── Banco de dados SQLite local ──────────────────────────────
+# Gerado automaticamente na primeira execucao; nao pertence ao repo
+*.db
+*.db-shm
+*.db-wal
+
+# ── Saida do build pendrive ───────────────────────────────────
+# Pasta gerada pelo build-pendrive.bat (pode ter centenas de MB)
+pendrive-dist/
+
+# ── Distribuicao gerada (EXE + JRE embutido) ─────────────────
+# Gerada pelo jpackage; nao pertence ao repositorio
+dist/
+
+# ── Sistema Operacional ───────────────────────────────────────
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS (caso alguem abra em Mac)
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Logs e temporarios ────────────────────────────────────────
+*.log
+*.tmp
+*.temp
+hs_err_pid*
+replay_pid*
+
+# ── Arquivos de ambiente ──────────────────────────────────────
+.env
+.env.local
+*.env
