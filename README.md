@@ -2,6 +2,8 @@
 
 Software Desktop profissional desenvolvido 100% em **Java 21**, utilizando **JavaFX** para a interface gráfica moderna e banco de dados local **SQLite** (zero instalação de servidores). Projetado para diagnósticos rápidos de computadores e impressoras, varredura de sub-redes locais, gerenciamento de IP manual e funcionamento autônomo (**Online e Offline**).
 
+Este projeto foi desenvolvido com o objetivo de auxiliar a empresa na qual trabalho, oferecendo uma ferramenta prática e portátil para o dia a dia do suporte técnico interno — eliminando a dependência de softwares pagos ou de difícil instalação nos ambientes atendidos.
+
 ---
 
 ## Funcionalidades Completas
