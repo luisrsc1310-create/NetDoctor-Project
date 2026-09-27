@@ -1,46 +1,27 @@
 @echo off
-setlocal EnableDelayedExpansion
 title NetDiag Pro - Build EXE Pendrive
 
 echo ============================================================
 echo   NetDiag Pro - Gerador de EXE Portavel para Pendrive
 echo   Resultado: pendrive-dist\NetDiag Pro\NetDiag Pro.exe
-echo   (Nao requer Java instalado no computador destino)
 echo ============================================================
 echo.
 
 :: ============================================================
-:: DETECCAO DO JDK
-:: Ordem: JAVA_HOME ja definido > .jdks do IntelliJ > PATH
+:: CONFIGURACAO DIRETA (caminhos fixos, sem depender de deteccao)
 :: ============================================================
 
-if "%JAVA_HOME%"=="" (
-    for /d %%d in ("%USERPROFILE%\.jdks\*") do (
-        if exist "%%d\bin\jpackage.exe" (
-            set "JAVA_HOME=%%d"
-        )
-    )
-)
+:: Java 26 (do IntelliJ) - usado apenas pelo jpackage
+set "JAVA_HOME=C:\Users\PC\.jdks\openjdk-26.0.1"
 
-if "%JAVA_HOME%"=="" (
-    where java >nul 2>&1
-    if !errorlevel! equ 0 (
-        for /f "tokens=*" %%i in ('where java') do (
-            for %%p in ("%%~dpi..") do set "JAVA_HOME=%%~fp"
-        )
-    )
-)
+:: Java 21 (instalado no sistema) - usado pelo Maven para compilar
+set "JAVA_HOME_MVN=C:\Program Files\Java\jdk-21.0.12.1"
 
-:: ============================================================
-:: DETECCAO DO MAVEN (IntelliJ embutido ou PATH)
-:: ============================================================
+set "MVN_CMD=C:\Program Files\JetBrains\IntelliJ IDEA 2026.1.3\plugins\maven\lib\maven3\bin\mvn.cmd"
+set "PROJECT_DIR=%~dp0"
 
-set "MVN_CMD=mvn"
-for /d %%d in ("C:\Program Files\JetBrains\IntelliJ IDEA*") do (
-    if exist "%%d\plugins\maven\lib\maven3\bin\mvn.cmd" (
-        set "MVN_CMD=%%d\plugins\maven\lib\maven3\bin\mvn.cmd"
-    )
-)
+:: Remove barra final do PROJECT_DIR se houver
+if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
 
 :: ============================================================
 :: VALIDACOES
@@ -48,87 +29,57 @@ for /d %%d in ("C:\Program Files\JetBrains\IntelliJ IDEA*") do (
 
 echo [1/4] Verificando pre-requisitos...
 
-if "%JAVA_HOME%"=="" (
-    echo.
-    echo [ERRO] JDK nao encontrado!
-    echo.
-    echo  O script procurou em:
-    echo    1. Variavel de ambiente JAVA_HOME
-    echo    2. %USERPROFILE%\.jdks\   ^(JDKs gerenciados pelo IntelliJ^)
-    echo    3. PATH do sistema
-    echo.
-    echo  Solucao: defina manualmente no inicio deste script:
-    echo    set "JAVA_HOME=C:\Users\PC\.jdks\openjdk-21.x.x"
-    echo.
-    echo  Ou instale o JDK 21+: https://adoptium.net/
-    echo.
-    goto :erro
-)
-
-echo       JDK encontrado em: %JAVA_HOME%
-
 if not exist "%JAVA_HOME%\bin\jpackage.exe" (
-    echo.
-    echo [ERRO] jpackage.exe nao encontrado em %JAVA_HOME%\bin\
-    echo        jpackage exige JDK 14+. Verifique a versao do JDK.
-    echo.
+    echo [ERRO] JDK nao encontrado em: %JAVA_HOME%
+    echo        Ajuste a variavel JAVA_HOME neste script.
     goto :erro
 )
+echo       JDK: %JAVA_HOME%
 
-echo       jpackage: OK
-
-"%MVN_CMD%" --version >nul 2>&1
-if errorlevel 1 (
-    echo.
-    echo [ERRO] Maven nao encontrado no PATH nem no IntelliJ em C:\Program Files\JetBrains\
-    echo.
+if not exist "%MVN_CMD%" (
+    echo [ERRO] Maven nao encontrado em: %MVN_CMD%
+    echo        Ajuste a variavel MVN_CMD neste script.
     goto :erro
 )
-
 echo       Maven: OK
 echo.
 
 :: ============================================================
-:: COMPILACAO - Gera o fat-jar com todas as dependencias
+:: COMPILACAO
 :: ============================================================
 
 echo [2/4] Compilando projeto com Maven...
 echo.
 
-call "%MVN_CMD%" clean package -q
+cd /d "%PROJECT_DIR%"
+set "JAVA_HOME=%JAVA_HOME_MVN%"
+"%MVN_CMD%" clean package -q
+set "JAVA_HOME=C:\Users\PC\.jdks\openjdk-26.0.1"
+echo Maven terminou.
 
-if errorlevel 1 (
-    echo.
-    echo [ERRO] Falha na compilacao. Verifique os erros acima.
+if not exist "%PROJECT_DIR%\target\net-diagnostico-1.0.0.jar" (
+    echo [ERRO] JAR nao foi gerado. Verifique os erros do Maven acima.
     goto :erro
 )
-
-if not exist "target\net-diagnostico-1.0.0.jar" (
-    echo [ERRO] JAR nao foi gerado. Verifique o pom.xml.
-    goto :erro
-)
-
-echo       JAR gerado: target\net-diagnostico-1.0.0.jar
+echo       JAR gerado OK.
 echo.
 
 :: ============================================================
-:: PREPARACAO - Pasta de entrada para o jpackage
+:: PREPARACAO DO INPUT PARA JPACKAGE
 :: ============================================================
 
-:: jpackage precisa do JAR em uma pasta separada
-if exist "target\jpackage-input" rmdir /s /q "target\jpackage-input"
-mkdir "target\jpackage-input"
-copy /y "target\net-diagnostico-1.0.0.jar" "target\jpackage-input\netdiag-pro.jar" >nul
+if exist "%PROJECT_DIR%\target\jpackage-input" rmdir /s /q "%PROJECT_DIR%\target\jpackage-input"
+mkdir "%PROJECT_DIR%\target\jpackage-input"
+copy /y "%PROJECT_DIR%\target\net-diagnostico-1.0.0.jar" "%PROJECT_DIR%\target\jpackage-input\netdiag-pro.jar" >nul
 
-:: Limpa saida anterior
-if exist "pendrive-dist" rmdir /s /q "pendrive-dist"
+if exist "%PROJECT_DIR%\pendrive-dist" rmdir /s /q "%PROJECT_DIR%\pendrive-dist"
 
 :: ============================================================
-:: GERACAO DO EXE com jpackage
+:: GERACAO DO EXE
 :: ============================================================
 
-echo [3/4] Gerando EXE portavel com jpackage...
-echo       (Isso pode levar alguns minutos na primeira vez)
+echo [3/4] Gerando EXE com jpackage...
+echo       (Aguarde, pode demorar 1-2 minutos)
 echo.
 
 "%JAVA_HOME%\bin\jpackage.exe" ^
@@ -137,10 +88,10 @@ echo.
     --app-version "1.0.0" ^
     --description "Ferramenta de Diagnostico de Rede e TI" ^
     --vendor "NetDiag" ^
-    --input "target\jpackage-input" ^
+    --input "%PROJECT_DIR%\target\jpackage-input" ^
     --main-jar "netdiag-pro.jar" ^
     --main-class "com.netdiag.Launcher" ^
-    --dest "pendrive-dist" ^
+    --dest "%PROJECT_DIR%\pendrive-dist" ^
     --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" ^
     --java-options "--add-opens java.base/java.lang.reflect=ALL-UNNAMED" ^
     --java-options "--add-opens java.base/java.io=ALL-UNNAMED" ^
@@ -148,55 +99,39 @@ echo.
     --java-options "--add-opens java.desktop/sun.java2d=ALL-UNNAMED" ^
     --java-options "-Dfile.encoding=UTF-8"
 
-if errorlevel 1 (
-    echo.
-    echo [ERRO] Falha ao gerar o EXE com jpackage.
-    echo.
-    echo  Causas comuns:
-    echo    - JavaFX nao esta no module-path. Veja nota abaixo.
-    echo    - Falta o WiX Toolset (necessario apenas para --type msi/exe installer,
-    echo      nao para app-image que estamos usando).
-    echo.
+if not exist "%PROJECT_DIR%\pendrive-dist\NetDiag Pro\NetDiag Pro.exe" (
+    echo [ERRO] jpackage falhou. EXE nao foi gerado.
     goto :erro
 )
 
-echo.
-echo       EXE gerado com sucesso.
+echo       EXE gerado OK.
 echo.
 
 :: ============================================================
-:: RESULTADO FINAL
+:: SUCESSO
 :: ============================================================
 
-echo [4/4] Finalizando...
+echo [4/4] Concluido!
 echo.
 echo ============================================================
 echo   BUILD CONCLUIDO COM SUCESSO!
 echo ============================================================
 echo.
-echo   Pasta gerada: %CD%\pendrive-dist\NetDiag Pro\
+echo   Pasta gerada: %PROJECT_DIR%\pendrive-dist\NetDiag Pro\
 echo.
 echo   Como usar:
 echo     1. Copie a pasta "pendrive-dist\NetDiag Pro\" para o pendrive
-echo     2. No computador destino, abra a pasta no pendrive
-echo     3. Clique direito em "NetDiag Pro.exe"
-echo        ^> "Executar como administrador"  (para funcoes de rede)
-echo        ^> Duplo clique normal            (para diagnostico basico)
+echo     2. No computador destino: clique direito em NetDiag Pro.exe
+echo        ^> "Executar como administrador"
 echo.
-echo   Nao requer instalacao de Java no computador destino!
-echo.
-
-goto :fim
+pause
+exit /b 0
 
 :erro
 echo.
 echo ============================================================
-echo   BUILD FALHOU - Verifique os erros acima
+echo   BUILD FALHOU
 echo ============================================================
 echo.
 pause
 exit /b 1
-
-:fim
-pause
-endlocal
