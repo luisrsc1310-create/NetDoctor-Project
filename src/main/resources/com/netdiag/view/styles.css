@@ -258,3 +258,24 @@
     -fx-border-width: 1px;
     -fx-padding: 12px;
 }
+
+
+/* ===== STATUS CELLS — Scanner de Impressoras na Rede ===== */
+
+.status-ok {
+    -fx-background-color: #d1fae5;
+    -fx-text-fill: #065f46;
+    -fx-font-weight: bold;
+}
+
+.status-warning {
+    -fx-background-color: #fef3c7;
+    -fx-text-fill: #92400e;
+    -fx-font-weight: bold;
+}
+
+.status-offline {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #991b1b;
+    -fx-font-weight: bold;
+}

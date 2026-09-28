@@ -1,5 +1,6 @@
 package com.netdiag.service;
 
+import com.netdiag.model.NetworkPrinterStatus;
 import com.netdiag.model.PrinterInfo;
 
 import javax.print.PrintService;
@@ -7,9 +8,15 @@ import javax.print.PrintServiceLookup;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public class PrinterService {
 
@@ -100,6 +107,73 @@ public class PrinterService {
         res.lpdPort515Ok = networkService.testPort(ipAddress, 515, 1500);
         res.details = res.getSummary();
         return res;
+    }
+
+    /**
+     * Varre a sub-rede em busca de impressoras de rede.
+     * Estratégia: testa ping + porta 9100 em todos os hosts do intervalo.
+     * Hosts que respondam a qualquer um dos dois são incluídos na lista
+     * e têm todas as portas de impressão testadas individualmente.
+     *
+     * @param baseSubnet   prefixo da sub-rede, ex: "192.168.1"
+     * @param startHost    primeiro octeto final, normalmente 1
+     * @param endHost      último octeto final, normalmente 254
+     * @param onPrinterFound callback chamado na thread do scanner a cada impressora encontrada
+     * @param onProgress     callback de progresso [0.0 – 1.0]
+     */
+    public void scanNetworkPrinters(String baseSubnet, int startHost, int endHost,
+                                    Consumer<NetworkPrinterStatus> onPrinterFound,
+                                    Consumer<Double> onProgress) {
+        int total = endHost - startHost + 1;
+        ExecutorService executor = Executors.newFixedThreadPool(40);
+        AtomicInteger completed = new AtomicInteger(0);
+
+        for (int i = startHost; i <= endHost; i++) {
+            final String ip = baseSubnet + "." + i;
+            executor.submit(() -> {
+                try {
+                    // Ping rápido
+                    long t0 = System.currentTimeMillis();
+                    boolean pingOk = false;
+                    try {
+                        InetAddress addr = InetAddress.getByName(ip);
+                        pingOk = addr.isReachable(500);
+                    } catch (Exception ignored) { }
+
+                    // Porta 9100 — principal indicador de impressora de rede
+                    boolean port9100 = networkService.testPort(ip, 9100, 400);
+
+                    // Só processar o host se ping ou porta 9100 responderem
+                    if (pingOk || port9100) {
+                        long pingMs = System.currentTimeMillis() - t0;
+
+                        // Testa as demais portas de impressão
+                        boolean port80  = networkService.testPort(ip, 80,  500)
+                                       || networkService.testPort(ip, 443, 500);
+                        boolean port515 = networkService.testPort(ip, 515, 400);
+
+                        // Resolve hostname (melhor esforço)
+                        String hostname = ip;
+                        try { hostname = InetAddress.getByName(ip).getHostName(); }
+                        catch (Exception ignored) { }
+
+                        NetworkPrinterStatus status = new NetworkPrinterStatus(
+                                ip, hostname, pingOk, port9100, port80, port515, pingMs);
+                        onPrinterFound.accept(status);
+                    }
+                } finally {
+                    int c = completed.incrementAndGet();
+                    if (onProgress != null) {
+                        onProgress.accept((double) c / total);
+                    }
+                }
+            });
+        }
+
+        executor.shutdown();
+        try {
+            executor.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) { }
     }
 
     /**

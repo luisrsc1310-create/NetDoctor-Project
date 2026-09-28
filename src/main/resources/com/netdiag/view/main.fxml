@@ -135,6 +135,33 @@
                             </HBox>
                             <TextArea fx:id="txtPrinterDiagOutput" prefHeight="120" editable="false" promptText="Os resultados dos testes de porta e conexão aparecerão aqui..."/>
                         </VBox>
+
+                        <!-- Scanner de Impressoras na Rede -->
+                        <VBox styleClass="card" spacing="12">
+                            <Label text="🖨️ Scanner de Impressoras em Toda a Rede" styleClass="card-title"/>
+                            <Label text="Varre toda a sub-rede local, encontra impressoras de rede automaticamente e mostra quais estão prontas para imprimir e quais estão com erro ou offline." style="-fx-text-fill: #64748b;" wrapText="true"/>
+                            <HBox spacing="12" alignment="CENTER_LEFT">
+                                <Label text="Sub-rede:"/>
+                                <TextField fx:id="txtNetPrinterSubnet" promptText="Ex: 192.168.1" prefWidth="130"/>
+                                <Label text="De:"/>
+                                <TextField fx:id="txtNetPrinterStart" text="1" prefWidth="55"/>
+                                <Label text="Até:"/>
+                                <TextField fx:id="txtNetPrinterEnd" text="254" prefWidth="55"/>
+                                <Button fx:id="btnScanNetworkPrinters" text="🔍 Buscar Impressoras na Rede" onAction="#handleScanNetworkPrinters" styleClass="btn-success"/>
+                                <Button fx:id="btnClearNetPrinters" text="Limpar" onAction="#handleClearNetPrinters" styleClass="btn-primary"/>
+                            </HBox>
+                            <ProgressBar fx:id="progressNetPrinters" prefWidth="9999" progress="0.0"/>
+                            <Label fx:id="lblNetPrinterStatus" text="Pronto para varrer a rede." style="-fx-text-fill: #64748b;"/>
+                            <TableView fx:id="tableNetPrinters" prefHeight="210" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="colNetPrIp"     text="Endereço IP"       prefWidth="140"/>
+                                    <TableColumn fx:id="colNetPrHost"   text="Hostname"           prefWidth="200"/>
+                                    <TableColumn fx:id="colNetPrStatus" text="Status"             prefWidth="230"/>
+                                    <TableColumn fx:id="colNetPrPing"   text="Latência"           prefWidth="90"/>
+                                    <TableColumn fx:id="colNetPrPorts"  text="Portas Abertas"     prefWidth="200"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
                     </VBox>
                 </ScrollPane>
             </Tab>

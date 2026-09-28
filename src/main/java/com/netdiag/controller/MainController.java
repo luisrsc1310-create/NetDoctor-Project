@@ -2,6 +2,7 @@ package com.netdiag.controller;
 
 import com.netdiag.model.DiagnosticLog;
 import com.netdiag.model.DiscoveredDevice;
+import com.netdiag.model.NetworkPrinterStatus;
 import com.netdiag.model.NetworkProfile;
 import com.netdiag.model.PrinterInfo;
 import com.netdiag.service.*;
@@ -67,6 +68,22 @@ public class MainController implements Initializable {
     @FXML private TextField txtPrinterIp;
     @FXML private Button btnDiagnosePrinter;
     @FXML private TextArea txtPrinterDiagOutput;
+
+    // Aba 2: Scanner de impressoras na rede
+    @FXML private TextField txtNetPrinterSubnet;
+    @FXML private TextField txtNetPrinterStart;
+    @FXML private TextField txtNetPrinterEnd;
+    @FXML private Button btnScanNetworkPrinters;
+    @FXML private Button btnClearNetPrinters;
+    @FXML private ProgressBar progressNetPrinters;
+    @FXML private Label lblNetPrinterStatus;
+    @FXML private TableView<NetworkPrinterStatus> tableNetPrinters;
+    @FXML private TableColumn<NetworkPrinterStatus, String> colNetPrIp;
+    @FXML private TableColumn<NetworkPrinterStatus, String> colNetPrHost;
+    @FXML private TableColumn<NetworkPrinterStatus, String> colNetPrStatus;
+    @FXML private TableColumn<NetworkPrinterStatus, String> colNetPrPing;
+    @FXML private TableColumn<NetworkPrinterStatus, String> colNetPrPorts;
+    private final ObservableList<NetworkPrinterStatus> netPrinterList = FXCollections.observableArrayList();
 
     // Aba 3: Varredura de Rede (IP Scanner)
     @FXML private TextField txtSubnetBase;
@@ -241,6 +258,32 @@ public class MainController implements Initializable {
         colPrinterDefault.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().isDefault() ? "SIM" : "NÃO"));
         colPrinterStatus.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getStatus()));
 
+        // Tabela do Scanner de Impressoras na Rede
+        tableNetPrinters.setItems(netPrinterList);
+        colNetPrIp.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getIpAddress()));
+        colNetPrHost.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getHostname()));
+        colNetPrPing.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPingText()));
+        colNetPrPorts.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPortsOpen()));
+
+        // Coluna de status com estilo colorido por célula
+        colNetPrStatus.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getStatusLabel()));
+        colNetPrStatus.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll("status-ok", "status-warning", "status-offline");
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    NetworkPrinterStatus row = getTableRow() != null ? (NetworkPrinterStatus) getTableRow().getItem() : null;
+                    if (row != null) {
+                        getStyleClass().add(row.getStatusStyle());
+                    }
+                }
+            }
+        });
+
         // Tabela de Dispositivos Descobertos no Scanner
         tableDiscovered.setItems(discoveredList);
         colDiscIp.setCellValueFactory(new PropertyValueFactory<>("ipAddress"));
@@ -286,9 +329,9 @@ public class MainController implements Initializable {
         cbHwTestSize.getSelectionModel().select(0);
     }
 
-    // ==========================================
+
     // TOP: TESTE DE INTERNET & RELATÓRIO
-    // ==========================================
+
     @FXML
     public void handleCheckInternet(ActionEvent event) {
         lblInternetStatus.setText("TESTANDO CONEXÃO...");
@@ -378,6 +421,7 @@ public class MainController implements Initializable {
                                 String[] parts = ad.ipAddress.split("\\.");
                                 if (parts.length == 4) {
                                     txtSubnetBase.setText(parts[0] + "." + parts[1] + "." + parts[2]);
+                                    txtNetPrinterSubnet.setText(parts[0] + "." + parts[1] + "." + parts[2]);
                                     break;
                                 }
                             }
@@ -414,9 +458,9 @@ public class MainController implements Initializable {
                 }));
     }
 
-    // ==========================================
+
     // ABA 2: IMPRESSORAS
-    // ==========================================
+
     @FXML
     public void handleScanPrinters(ActionEvent event) {
         btnScanPrinters.setDisable(true);
@@ -453,9 +497,74 @@ public class MainController implements Initializable {
                 }));
     }
 
-    // ==========================================
+    @FXML
+    public void handleScanNetworkPrinters(ActionEvent event) {
+        String base = txtNetPrinterSubnet.getText() != null ? txtNetPrinterSubnet.getText().trim() : "192.168.1";
+        if (base.isEmpty()) base = "192.168.1";
+
+        int start = 1;
+        int end   = 254;
+        try { start = Integer.parseInt(txtNetPrinterStart.getText().trim()); } catch (Exception ignored) {}
+        try { end   = Integer.parseInt(txtNetPrinterEnd.getText().trim());   } catch (Exception ignored) {}
+
+        final int finalStart = start;
+        final int finalEnd   = end;
+        final String finalBase = base;
+
+        netPrinterList.clear();
+        btnScanNetworkPrinters.setDisable(true);
+        progressNetPrinters.setProgress(0.0);
+        lblNetPrinterStatus.setText("Varrendo " + finalBase + "." + finalStart + " – " + finalBase + "." + finalEnd + "...");
+        lblNetPrinterStatus.setStyle("-fx-text-fill: #2563eb;");
+
+        CompletableFuture.runAsync(() -> {
+            printerService.scanNetworkPrinters(
+                    finalBase, finalStart, finalEnd,
+                    printer -> Platform.runLater(() -> {
+                        netPrinterList.add(printer);
+                        // Ordena: primeiro OK, depois Alerta, depois Offline
+                        netPrinterList.sort((a, b) -> a.getStatusStyle().compareTo(b.getStatusStyle()));
+                    }),
+                    progress -> Platform.runLater(() -> progressNetPrinters.setProgress(progress))
+            );
+
+            Platform.runLater(() -> {
+                btnScanNetworkPrinters.setDisable(false);
+                progressNetPrinters.setProgress(1.0);
+
+                long ok      = netPrinterList.stream().filter(p -> "status-ok".equals(p.getStatusStyle())).count();
+                long alerta  = netPrinterList.stream().filter(p -> "status-warning".equals(p.getStatusStyle())).count();
+                long offline = netPrinterList.stream().filter(p -> "status-offline".equals(p.getStatusStyle())).count();
+
+                String resumo;
+                if (netPrinterList.isEmpty()) {
+                    resumo = "Nenhuma impressora encontrada na sub-rede " + finalBase + ".";
+                    lblNetPrinterStatus.setStyle("-fx-text-fill: #64748b;");
+                } else {
+                    resumo = String.format("Varredura concluída: %d impressora(s) — ✅ %d prontas | ⚠ %d com alerta | ❌ %d offline.",
+                            netPrinterList.size(), ok, alerta, offline);
+                    lblNetPrinterStatus.setStyle("-fx-text-fill: #059669; -fx-font-weight: bold;");
+                }
+                lblNetPrinterStatus.setText(resumo);
+
+                logToDb("Scanner Impressoras", finalBase + ".0/24", "CONCLUÍDO",
+                        netPrinterList.size() + " impressora(s) | OK:" + ok + " Alerta:" + alerta + " Offline:" + offline);
+                setStatusBar(resumo);
+            });
+        });
+    }
+
+    @FXML
+    public void handleClearNetPrinters(ActionEvent event) {
+        netPrinterList.clear();
+        progressNetPrinters.setProgress(0.0);
+        lblNetPrinterStatus.setText("Pronto para varrer a rede.");
+        lblNetPrinterStatus.setStyle("-fx-text-fill: #64748b;");
+    }
+
+
     // ABA 3: VARREDURA DE REDE (IP SCANNER)
-    // ==========================================
+
     @FXML
     public void handleStartNetworkScan(ActionEvent event) {
         String base = txtSubnetBase.getText().trim();
@@ -491,9 +600,7 @@ public class MainController implements Initializable {
         });
     }
 
-    // ==========================================
     // ABA 4: CONFIGURAÇÃO DE IP MANUAL / DHCP
-    // ==========================================
     @FXML
     public void handleApplyStaticIp(ActionEvent event) {
         NetworkService.NetworkInterfaceInfo selectedAdapter = cbAdapters.getSelectionModel().getSelectedItem();
@@ -608,9 +715,9 @@ public class MainController implements Initializable {
         }
     }
 
-    // ==========================================
+
     // ABA 5: FERRAMENTAS DE SUPORTE TI
-    // ==========================================
+
     @FXML
     public void handleRestartSpooler(ActionEvent event) {
         txtToolsOutput.setText("Reiniciando serviço do Spooler de Impressão do Windows...\n");
@@ -652,9 +759,7 @@ public class MainController implements Initializable {
                 }));
     }
 
-    // ==========================================
     // ABA 6: HISTÓRICO & BANCO
-    // ==========================================
     @FXML
     public void handleRefreshLogs(ActionEvent event) {
         List<DiagnosticLog> logs = dbService.getRecentLogs(100);
@@ -679,9 +784,7 @@ public class MainController implements Initializable {
         Platform.runLater(() -> lblStatusBar.setText(message + " | SQLite Ativo."));
     }
 
-    // ==========================================
     // ABA 7: TESTES DE HARDWARE
-    // ==========================================
 
     @FXML
     public void handleHwCpuInfo(ActionEvent e) {
@@ -910,11 +1013,9 @@ public class MainController implements Initializable {
         });
     }
 
-    // ==========================================
     // ABA 8: INSTALAÇÕES
-    // ==========================================
 
-    /** Inicia o download de um software em background, atualizando a UI. */
+    /** Inicia o download de um software em background, hehe */
     private void startDownload(InstallService.Software sw,
                                ProgressBar progressBar,
                                Label statusLabel,
@@ -1035,10 +1136,7 @@ public class MainController implements Initializable {
         }
     }
 
-    // ==========================================
     // ABA 8: LINKS ÚTEIS
-    // ==========================================
-
     private void openUrl(String url) {
         try {
             Desktop.getDesktop().browse(new java.net.URI(url));
